@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Card's Friend</title>
+    <!-- font-->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&amp;family=Noto+Sans+KR:wght@100;200;300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100;200;300;400;500;600;700;800;900&amp;family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700;1,800;1,900&amp;display=swap" rel="stylesheet">
+    <!-- XEicon-->
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/xeicon@2.3.3/xeicon.min.css">
+    <!-- favicon-->
+    <link rel="apple-touch-icon" sizes="180x180" href="../../apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../../favicon-16x16.png">
+    <link rel="manifest" href="../../site.webmanifest">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="theme-color" content="#ffffff">
+    <!-- stylesheet-->
+    <link rel="stylesheet" type="text/css" href="../css/cardMatch.css">
+  </head>
+  <body>
+    <div class="wrapBox">
+      <div class="flyingBatObj"></div>
+      <div class="hangingBatObj hangingBatObj1"></div>
+      <div class="hangingBatObj hangingBatObj2"></div>
+      <section class="gameStartBox">
+        <article class="gameRulesBox">
+          <h1>GAME RULES</h1>
+          <div> 
+            <p>1. 게임이 시작되면 10초 동안 모든 카드를 보여줍니다</p>
+            <p>2. 10초가 지나면 모든 카드가 가려집니다</p>
+            <p>3. 한차례에 카드 두 장을 뒤집어볼 수 있습니다</p>
+            <p>4. 카드의 짝이 맞으면 카드는 사라지고 점수가 올라갑니다</p>
+            <p>5. 카드의 짝이 맞지 않으면 시간이 5초 줄어들고 카드는 다시 가려집니다</p>
+            <p>6. 제한 시간 내에 모든 카드의 짝을 찾으면 다음 레벨로 넘어갑니다</p>
+            <p>7. 제한 시간 내에 모든 카드의 짝을 찾지 못하면 게임이 종료됩니다</p>
+          </div>
+        </article>
+        <button id="gameStartBtn">START</button>
+      </section>
+      <section class="gameEndBox">
+        <div class="gameWinPara">YOU WIN!</div>
+        <button id="gameRestartBtn">HOME</button>
+      </section>
+      <section class="gameDisplayBox">
+        <article class="gameTitleBox">
+          <h1>Find Card's Friend</h1>
+        </article>
+        <article class="gamePlayBox">
+          <section class="cardElementsBox" id="cardElementsBox"></section>
+          <section class="showCurrentStateGameBox">
+            <article class="showCurrentLevelBox stateBox">
+              <p>레벨</p>
+              <div class="currentLevel" id="currentLevel"></div>
+            </article>
+            <article class="showCurrentRemainCardBox stateBox">
+              <p>남은 카드</p>
+              <div class="currentRemainCard" id="currentRemainCard"></div>
+            </article>
+            <article class="showCurrentScoreBox stateBox">
+              <p>점수</p>
+              <div class="currentScore" id="currentScore"></div>
+            </article>
+            <article class="showCurrentRemainTimeBox stateBox">
+              <p>남은 시간</p>
+              <div class="currentRemainTime" id="currentRemainTime"></div>
+            </article>
+          </section>
+        </article>
+      </section>
+    </div>
+    <!-- script-->
+    <script type="text/javascript" src="../script/cardMatch.js"></script>
+  </body>
+</html>
