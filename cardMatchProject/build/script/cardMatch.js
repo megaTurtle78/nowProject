@@ -60,6 +60,7 @@
             myCardMatch.updateRemainCardAndScore();
             myCardMatch.updateReadyTime();
         }
+        // 이건 거의 static 아닌가?
         formatTime = timeParam => {
             const minutesValue = String(Math.floor(timeParam / 60));
             const secondsValue = String(timeParam % 60).padStart(2, '0');
