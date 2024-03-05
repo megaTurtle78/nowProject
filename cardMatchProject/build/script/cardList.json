@@ -1,4 +1,5 @@
 [
+    { "id": 0, "name": "unicorn" },
     { "id": 1, "name": "apple" },
     { "id": 2, "name": "avocado" },
     { "id": 3, "name": "baguette" },
@@ -39,6 +40,5 @@
     { "id": 38, "name": "thunderbolt" },
     { "id": 39, "name": "treasure" },
     { "id": 40, "name": "tree" },
-    { "id": 41, "name": "ufo" },
-    { "id": 42, "name": "unicorn" }
+    { "id": 41, "name": "ufo" }
 ]

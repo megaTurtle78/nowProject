@@ -1,213 +1,131 @@
 (function main() {
     class CardMatchGameMaker {
-        constructor() {
+        constructor(identifier) {
+            this.id = identifier;
             this.startLevel = 1;
             this.endLevel = 20;
-            this.timeLimit = 301;   // +1초 기입
-            this.readyTime = 10;
-            this.penaltyTime = 5;
-            this.currentScore = 0;
-            this.cardList = [
-                { id: 1, name: 'apple' },
-                { id: 2, name: 'avocado' },
-                { id: 3, name: 'baguette' },
-                { id: 4, name: 'banana' },
-                { id: 5, name: 'beer' },
-                { id: 6, name: 'book' },
-                { id: 7, name: 'bread' },
-                { id: 8, name: 'cat' },
-                { id: 9, name: 'cherryBlossom' },
-                { id: 10, name: 'crown' },
-                { id: 11, name: 'devil' },
-                { id: 12, name: 'diamondRing' },
-                { id: 13, name: 'dog' },
-                { id: 14, name: 'earth' },
-                { id: 15, name: 'fire' },
-                { id: 16, name: 'garlic' },
-                { id: 17, name: 'ghost' },
-                { id: 18, name: 'grapes' },
-                { id: 19, name: 'hamburger' },
-                { id: 20, name: 'heart' },
-                { id: 21, name: 'key' },
-                { id: 22, name: 'koala' },
-                { id: 23, name: 'medal' },
-                { id: 24, name: 'money' },
-                { id: 25, name: 'monkey' },
-                { id: 26, name: 'moon' },
-                { id: 27, name: 'mushroom' },
-                { id: 28, name: 'palmTree' },
-                { id: 29, name: 'pearls' },
-                { id: 30, name: 'rabbit' },
-                { id: 31, name: 'rocket' },
-                { id: 32, name: 'sheep' },
-                { id: 33, name: 'shell' },
-                { id: 34, name: 'skeleton' },
-                { id: 35, name: 'snail' },
-                { id: 36, name: 'star' },
-                { id: 37, name: 'sun' },
-                { id: 38, name: 'thunderbolt' },
-                { id: 39, name: 'treasure' },
-                { id: 40, name: 'tree' },
-                { id: 41, name: 'ufo' },
-                { id: 42, name: 'unicorn' },
-            ]
+            this.timeLimit = 300;   // 초
+            this.readyTime = 10;   // 초
+            this.penaltyTime = 5;   // 초
+            this.defaultCardAmount = 8; // 장
+            this.cardIncrease = 4;  // 쌍
+            this.scoreAmount = 0;   // 점
+            this.cardList = [];
+            this.stageItor = null;
+            this.nowStage = null;
         }
-        run = () => {
-            // 각 레벨마다 새로운 클래스 생성
-            const myCardMatch = new CardMatchGame();
-            myCardMatch.init();
-            myCardMatch.visualizeCardList();
-            myCardMatch.updateRemainCardAndScore();
-            myCardMatch.updateReadyTime();
+        async run() {
+            // cardList.json 가져오기
+            try {
+                const cardListResponse = await this.loadCardList();
+                this.cardList = cardListResponse;
+            } catch (error) {
+                console.error('Error!!', error);
+            }
+            //
+            // 각 레벨 객체 만들고 iterator로 만들기
+            let levelObjArray = [];
+            for (let i = this.startLevel - 1; i < this.endLevel; i++) {
+                levelObjArray[i] = new CardMatchGameStage(i + 1);
+            }
+            this.stageItor = levelObjArray[Symbol.iterator]();
+            this.nowStage = this.stageItor.next().value;
+            //
+            // 카드 게임 로직 시작
+            this.nowStage.init();
+            this.nowStage.gameControll();
+            //
         }
-        // 이건 거의 static 아닌가?
-        formatTime = timeParam => {
+        loadCardList() {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', '../script/cardList.json');
+                xhr.send();
+
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState !== XMLHttpRequest.DONE) return;
+
+                    if (xhr.status === 200) {
+                        const responseObject = JSON.parse(xhr.responseText);
+                        resolve(responseObject);
+                    } else {
+                        reject(new Error('Failed!!'));
+                    }
+                };
+            });
+        }
+        formatTime(timeParam) {
             const minutesValue = String(Math.floor(timeParam / 60));
+
             const secondsValue = String(timeParam % 60).padStart(2, '0');
             return `${minutesValue}:${secondsValue}`;
         }
     }
-    class CardMatchGame {
-        constructor() {
-            this.level = 1;
-            this.amountCard = 8;
-            this.remainTime = cardMatchGame.readyTime;
-            this.remainCard = this.amountCard;
-            this.currentCardList = [];
-            this.arrangeCardList = [];
-            this.cardRow = 0;
-            this.cardCol = 0;
-            this.currentGameStateArray = [];
+    class CardMatchGameStage {
+        constructor(level) {
+            this.level = level;
+            this.remainCard = findCardFriend.defaultCardAmount + ((this.level - 1) * findCardFriend.cardIncrease);
+            this.remainTime = findCardFriend.readyTime;
+            this.cardArrangeArray = [];
+            this.gameStateArray = [];
         }
-        init = () => {
-            // 카드배치 크기를 결정
-            const setCardRowCol = () => {
-                for (let i = 1; i <= this.amountCard; i++) {
-                    if (this.amountCard % i === 0) {
-                        if (i > this.amountCard / i) {
+        init() {
+            // 게임 상태 배열 초기화 => 초기값 : 1(nowChoicedCard)
+            const initGameStateArray = () => {
+                let rowValue = 0;
+                let colValue = 0;
+                for (let i = 1; i <= this.remainCard; i++) {
+                    if (this.remainCard % i === 0) {
+                        if (i > this.remainCard / i) {
                             break;
                         }
-                        this.cardRow = i;
-                        this.cardCol = this.amountCard / i;
+                        rowValue = i;
+                        colValue = this.remainCard / i;
+                    }
+                }
+                for (let i = 0; i < rowValue; i++) {
+                    this.gameStateArray.push([]);
+                    for (let j = 0; j < colValue; j++) {
+                        this.gameStateArray[i].push(1);
                     }
                 }
             }
-            // 게임 상태를 관리할 배열 만들기 => 초기값 : 1(nowChoicedCard)
-            const initGameStateArray = () => {
-                for (let i = 0; i < this.cardRow; i++) {
-                    this.currentGameStateArray.push([]);
-                    for (let j = 0; j < this.cardCol; j++) {
-                        this.currentGameStateArray[i].push(1);
-                    }
-                }
-            }
-            // 중복 없는 카드리스트 만들기
-            const makeCardList = () => {
-                for (let i = 0; i < this.amountCard / 2; i++) {
-                    let randomNumber = 0;
-                    do {
-                        randomNumber = Math.floor(Math.random() * cardMatchGame.cardList.length) + 1;
-                    } while (this.currentCardList.includes(cardMatchGame.cardList[randomNumber - 1]))
-                    this.currentCardList[i] = cardMatchGame.cardList[randomNumber - 1];
-                }
-            }
-            // 실제로 화면에 뿌릴 배치리스트 만들기
-            const makeCardArrangement = () => {
+            //
+            // 랜덤으로 게임에 사용할 카드 리스트 만들기
+            const makeRandomCardList = () => {
+                let randomNumber = 0;
+                let tempArray = [];
                 let randomOrder = [];
-                for (let i = 0; i < this.amountCard; i++) {
-                    let randomNumber = 0;
+                for (let i = 0; i < this.remainCard / 2; i++) {
                     do {
-                        randomNumber = Math.floor(Math.random() * this.amountCard);
+                        randomNumber = Math.floor(Math.random() * findCardFriend.cardList.length);
+                    } while (tempArray.includes(findCardFriend.cardList[randomNumber]))
+                    tempArray[i] = findCardFriend.cardList[randomNumber];
+                }
+                for (let i = 0; i < this.remainCard; i++) {
+                    do {
+                        randomNumber = Math.floor(Math.random() * this.remainCard);
                     } while (randomOrder.includes(randomNumber))
                     randomOrder[i] = randomNumber;
                 }
-                for (let i = 0; i < this.amountCard / 2; i++) {
-                    this.arrangeCardList[randomOrder[i]] = { id: i, name: this.currentCardList[i].name };
-                    this.arrangeCardList[randomOrder[i + (this.amountCard / 2)]] = { id: i + (this.amountCard / 2), name: this.currentCardList[i].name };
+                for (let i = 0; i < this.remainCard / 2; i++) {
+                    this.cardArrangeArray[randomOrder[i]] = tempArray[i].name;
+                    this.cardArrangeArray[randomOrder[i + (this.remainCard/ 2)]] = tempArray[i].name;
                 }
+                console.log(this.cardArrangeArray)
             }
-            setCardRowCol();
+            //
             initGameStateArray();
-            makeCardList();
-            makeCardArrangement();
+            makeRandomCardList();
             document.getElementById("currentLevel").innerHTML = this.level;
-            document.getElementById("currentRemainTime").innerHTML = cardMatchGame.formatTime(this.remainTime);
-        }
-        // 게임 인포메이션 갱신(남은 카드, 점수)
-        updateRemainCardAndScore = () => {
             document.getElementById("currentRemainCard").innerHTML = this.remainCard;
-            document.getElementById("currentScore").innerHTML = cardMatchGame.currentScore;
+            document.getElementById("currentScore").innerHTML = findCardFriend.scoreAmount;
+            document.getElementById("currentRemainTime").innerHTML = findCardFriend.formatTime(this.remainTime);
         }
-        // 게임 인포메이션 갱신(미리보기 시간)
-        updateReadyTime = () => {
-            const checkEndTime = () => {
-                const nowTimeInfo = new Date();
-                if (nowTimeInfo.getTime() > endTimeInfo) {
-                    for (let i = 0; i < this.cardRow; i++) {
-                        for (let j = 0; j < this.cardCol; j++) {
-                            this.currentGameStateArray[i][j] = 0;
-                        }
-                    }
-                    clearInterval(checkEndTimeHandler);
-                    this.visualizeCardList();
-                    this.remainTime = cardMatchGame.timeLimit;
-                    document.getElementById("currentRemainTime").innerHTML = cardMatchGame.formatTime(this.remainTime);
-                    this.updateRemainTime();
-                }
-                this.remainTime--;
-                document.getElementById("currentRemainTime").innerHTML = cardMatchGame.formatTime(this.remainTime);
-            }
-            const nowTimeInfo = new Date();
-            const endTimeInfo = nowTimeInfo.getTime() + (this.remainTime * 1000);
-            const checkEndTimeHandler = setInterval(checkEndTime, 1000);
+        gameControll() {
+            // 클릭 이벤트
+            console.log('merong merong')
         }
-        // 게임 인포메이션 갱신(게임 시간)
-        updateRemainTime = () => {
-            const checkEndTime = () => {
-                const nowTimeInfo = new Date();
-                if (nowTimeInfo.getTime() > endTimeInfo) {
-                    clearInterval(checkEndTimeHandler);
-                    console.log("you died");
-                }
-                this.remainTime--;
-                document.getElementById("currentRemainTime").innerHTML = cardMatchGame.formatTime(this.remainTime);
-            }
-            const nowTimeInfo = new Date();
-            const endTimeInfo = nowTimeInfo.getTime() + (this.remainTime * 1000);
-            const checkEndTimeHandler = setInterval(checkEndTime, 1000);
-        }
-        // 카드리스트 시각화
-        visualizeCardList = () => {
-            const giveRandomUrl = () => {
-                const nodeListArray = document.querySelectorAll(`.cardElementCol`);
-                for (let i = 0; i < this.amountCard; i++) {
-                    if (nodeListArray[i].classList.contains("nowChoicedCard")) {
-                        nodeListArray[i].style.backgroundImage = `url('../res/cardImage/${this.arrangeCardList[i].name}.png')`;
-                    }
-                }
-            }
-            let tempString = "";
-            for (let i = 0; i < this.cardRow; i++) {
-                tempString += `<div class="cardElementRow">`;
-                for (let j = 0; j < this.cardCol; j++) {
-                    switch (this.currentGameStateArray[i][j]) {
-                        case 0:
-                            tempString += `<div id="${i}_${j}" class="cardElementCol misteryCard"></div>`;
-                            break;
-                        case 1:
-                            tempString += `<div id="${i}_${j}" class="cardElementCol nowChoicedCard"></div>`;
-                            break;
-                        case 2:
-                            tempString += `<div id="${i}_${j}" class="cardElementCol foundCard"></div>`;
-                            break;
-                    }
-                }
-                tempString += `</div>`;
-            }
-            document.getElementById("cardElementsBox").innerHTML = tempString;
-            giveRandomUrl();
-        }
-        // 카드 클릭 이벤트
     }
 
     // 박쥐 눈 깜빡깜빡
@@ -216,11 +134,8 @@
         const hangingBatObj = document.querySelectorAll(`.hangingBatObj`);
         const [hangingBatObj1, hangingBatObj2] = hangingBatObj;
         const batBlinkInterval = (batObj, normalImage, blinkImage) => {
-            if (batObj.style.backgroundImage === `url("../res/designImage/${blinkImage}")`) {
-                batObj.style.backgroundImage = `url("../res/designImage/${normalImage}")`;
-            } else {
-                batObj.style.backgroundImage = `url("../res/designImage/${blinkImage}")`;
-            }
+            let urlInfo = batObj.style.backgroundImage === `url("../res/designImage/${blinkImage}")` ? `url("../res/designImage/${normalImage}")` : `url("../res/designImage/${blinkImage}")`;
+            batObj.style.backgroundImage = urlInfo;
         }
         const flyingBatBlink = () => batBlinkInterval(flyingBatObj, 'batTwins.png', 'batTwinsYellow.png');
         const hangingBat1Blink = () => batBlinkInterval(hangingBatObj1, 'bat.png', 'batYellow.png');
@@ -232,9 +147,8 @@
     batEyesBlink();
 
     document.getElementById("gameStartBtn").addEventListener("click", () => {
+        findCardFriend.run();
         document.querySelector(".gameStartBox").style.display = "none";
-        cardMatchGame.run();
     });
-    const cardMatchGame = new CardMatchGameMaker();
-
+    const findCardFriend = new CardMatchGameMaker('findCardFriend');
 })();
