@@ -40,7 +40,6 @@
             //
             // 카드 게임 로직 시작
             this.nowStage.init();
-            this.nowStage.visualizeCardList();
             this.nowStage.gameControll();
             //
         }
@@ -68,33 +67,34 @@
             return `${minutesValue}:${secondsValue}`;
         }
     }
-    class CardMatchGameStage {
+    class CardMatchGameStage extends CardMatchGameMaker {
         constructor(level) {
+            super();
             this.level = level;
-            this.amountCard = findCardFriend.defaultCardAmount + ((this.level - 1) * findCardFriend.cardIncrease);
-            this.remainCard = findCardFriend.defaultCardAmount + ((this.level - 1) * findCardFriend.cardIncrease);
-            this.remainTime = findCardFriend.readyTime;
+            this.amountCard = this.defaultCardAmount + ((this.level - 1) * this.cardIncrease);
+            this.remainCard = this.defaultCardAmount + ((this.level - 1) * this.cardIncrease);
+            this.remainTime = this.readyTime;
             this.cardArrangeArray = [];
             this.gameStateArray = [];
         }
         init() {
-            // 게임 상태 배열 초기화
+            // 게임 상태 배열 초기화 => 초기값 : 1(nowChoicedCard)
             const initGameStateArray = () => {
                 let rowValue = 0;
                 let colValue = 0;
-                for (let i = 1; i <= this.amountCard; i++) {
+                for (let i = 1; i <= this.remainCard; i++) {
                     if (this.remainCard % i === 0) {
-                        if (i > this.amountCard / i) {
+                        if (i > this.remainCard / i) {
                             break;
                         }
                         rowValue = i;
-                        colValue = this.amountCard / i;
+                        colValue = this.remainCard / i;
                     }
                 }
                 for (let i = 0; i < rowValue; i++) {
                     this.gameStateArray.push([]);
                     for (let j = 0; j < colValue; j++) {
-                        this.gameStateArray[i].push(0);
+                        this.gameStateArray[i].push(1);
                     }
                 }
             }
@@ -104,26 +104,26 @@
                 let randomNumber = 0;
                 let tempArray = [];
                 let randomOrder = [];
-                // let randomArray = [];
-                for (let i = 0; i < this.amountCard / 2; i++) {
+                let randomArray = [];
+                for (let i = 0; i < this.remainCard / 2; i++) {
                     do {
-                        randomNumber = Math.floor(Math.random() * findCardFriend.cardList.length);
-                    } while (tempArray.includes(findCardFriend.cardList[randomNumber]))
-                    tempArray[i] = findCardFriend.cardList[randomNumber];
+                        randomNumber = Math.floor(Math.random() * this.cardList.length);
+                    } while (tempArray.includes(this.cardList[randomNumber]))
+                    tempArray[i] = this.cardList[randomNumber];
                 }
-                for (let i = 0; i < this.amountCard; i++) {
+                for (let i = 0; i < this.remainCard; i++) {
                     do {
-                        randomNumber = Math.floor(Math.random() * this.amountCard);
+                        randomNumber = Math.floor(Math.random() * this.remainCard);
                     } while (randomOrder.includes(randomNumber))
                     randomOrder[i] = randomNumber;
                 }
-                for (let i = 0; i < this.amountCard / 2; i++) {
+                for (let i = 0; i < this.remainCard / 2; i++) {
                     // randomArray[randomOrder[i]] = tempArray[i].name;
                     // randomArray[randomOrder[i + (this.remainCard / 2)]] = tempArray[i].name;
 
-                    //this.cardArrangeArray NOK, 정답지 만들기
+                    //this.cardArrangeArray NOK
                     this.cardArrangeArray[randomOrder[i]] = tempArray[i].name;
-                    this.cardArrangeArray[randomOrder[i + (this.amountCard / 2)]] = tempArray[i].name;
+                    this.cardArrangeArray[randomOrder[i + (this.remainCard / 2)]] = tempArray[i].name;
                 }
             }
             //
@@ -132,57 +132,48 @@
             document.getElementById("currentLevel").innerHTML = this.level;
             document.getElementById("currentRemainCard").innerHTML = this.remainCard;
             document.getElementById("currentScore").innerHTML = findCardFriend.scoreAmount;
-            document.getElementById("currentRemainTime").innerHTML = findCardFriend.formatTime(this.remainTime);
-        }
-        // 카드 시각화
-        visualizeCardList = () => {
-            const giveRandomUrl = () => {
-                const nodeListArray = document.querySelectorAll(`.cardElementCol`);
-                for (let i = 0; i < this.amountCard; i++) {
-                    if (nodeListArray[i].classList.contains("nowChoicedCard")) {
-                        nodeListArray[i].style.backgroundImage = `url('../res/cardImage/${this.cardArrangeArray[i]}.png')`;
-                    }
-                }
-            }
-            const giveCardClickEvent = () => {
-                document.querySelectorAll('.cardElementCol').forEach(v => {
-                    v.addEventListener("click", e => {
-                        const [rowIndex, colIndex] = e.target.id.split('_');
-                        this.gameStateArray[Number(rowIndex)][Number(colIndex)] = 1;
-                    });
-                });
-            }
-            while (findCardFriend.cardDisplayDom.firstChild) {
-                findCardFriend.cardDisplayDom.removeChild(findCardFriend.cardDisplayDom.firstChild);
-            }
-            let newRowDiv = null;
-            let newColDiv = null;
-            for (let i = 0; i < this.gameStateArray.length; i++) {
-                newRowDiv = document.createElement('div');
-                newRowDiv.classList.add("cardElementRow");
-                findCardFriend.cardDisplayDom.appendChild(newRowDiv);
-                for (let j = 0; j < this.gameStateArray[0].length; j++) {
-                    newColDiv = document.createElement('div');
-                    newColDiv.id = `${i}_${j}`;
-                    newColDiv.classList.add("cardElementCol");
-                    switch (this.gameStateArray[i][j]) {
-                        case 0:
-                            newColDiv.classList.add("misteryCard");
-                            break;
-                        case 1:
-                            newColDiv.classList.add("nowChoicedCard");
-                            break;
-                        case 2:
-                            newColDiv.classList.add("foundCard");
-                            break;
-                    }
-                    newRowDiv.appendChild(newColDiv);
-                }
-            }
-            giveRandomUrl();
-            giveCardClickEvent();
+            document.getElementById("currentRemainTime").innerHTML = this.formatTime(this.remainTime);
         }
         gameControll() {
+            // 카드 시각화
+            const visualizeCardList = () => {
+                const giveRandomUrl = () => {
+                    const nodeListArray = document.querySelectorAll(`.cardElementCol`);
+                    for (let i = 0; i < this.amountCard; i++) {
+                        if (nodeListArray[i].classList.contains("nowChoicedCard")) {
+                            nodeListArray[i].style.backgroundImage = `url('../res/cardImage/${this.cardArrangeArray[i]}.png')`;
+                        }
+                    }
+                }
+                let newRowDiv = null;
+                let newColDiv = null;
+                for (let i = 0; i < this.gameStateArray.length; i++) {
+                    newRowDiv = document.createElement('div');
+                    newRowDiv.classList.add("cardElementRow");
+                    this.cardDisplayDom.appendChild(newRowDiv);
+                    for (let j = 0; j < this.gameStateArray[0].length; j++) {
+                        newColDiv = document.createElement('div');
+                        newColDiv.id = `${i}_${j}`;
+                        newColDiv.classList.add("cardElementCol");
+                        switch (this.gameStateArray[i][j]) {
+                            case 0:
+                                newColDiv.classList.add("misteryCard");
+                                newRowDiv.appendChild(newColDiv);
+                                break;
+                            case 1:
+                                newColDiv.classList.add("nowChoicedCard");
+                                newRowDiv.appendChild(newColDiv);
+                                break;
+                            case 2:
+                                newColDiv.classList.add("foundCard");
+                                newRowDiv.appendChild(newColDiv);
+                                break;
+                        }
+                    }
+                }
+                giveRandomUrl();
+            }
+            visualizeCardList();
         }
     }
 
