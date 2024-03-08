@@ -149,6 +149,7 @@
                     v.addEventListener("click", e => {
                         const [rowIndex, colIndex] = e.target.id.split('_');
                         this.gameStateArray[Number(rowIndex)][Number(colIndex)] = 1;
+                        console.log(this.gameStateArray);
                     });
                 });
             }
