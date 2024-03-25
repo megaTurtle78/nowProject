@@ -41,7 +41,6 @@
             // 카드 게임 로직 시작
             this.nowStage.init();
             this.nowStage.visualizeCardList();
-            this.nowStage.gameControll();
             //
         }
         loadCardList() {
@@ -50,8 +49,8 @@
                 xhr.open('GET', '../script/cardList.json');
                 xhr.send();
 
-                xhr.onreadystatechange = function () {
-                    if (xhr.readyState !== XMLHttpRequest.DONE) return;
+                xhr.onreadystatechange = () => {
+                    if (xhr.readyState != XMLHttpRequest.DONE) return;
 
                     if (xhr.status === 200) {
                         const responseObject = JSON.parse(xhr.responseText);
@@ -74,11 +73,13 @@
             this.amountCard = findCardFriend.defaultCardAmount + ((this.level - 1) * findCardFriend.cardIncrease);
             this.remainCard = findCardFriend.defaultCardAmount + ((this.level - 1) * findCardFriend.cardIncrease);
             this.remainTime = findCardFriend.readyTime;
-            this.cardArrangeArray = [];
+            this.randomCardArrangement = [];
+            this.correctAnswer = [];
             this.gameStateArray = [];
+            this.clickFlag = false;
         }
         init() {
-            // 게임 상태 배열 초기화
+            // 게임 상태 배열과 정답지 배열 초기화
             const initGameStateArray = () => {
                 let rowValue = 0;
                 let colValue = 0;
@@ -93,8 +94,10 @@
                 }
                 for (let i = 0; i < rowValue; i++) {
                     this.gameStateArray.push([]);
+                    this.correctAnswer.push([]);
                     for (let j = 0; j < colValue; j++) {
                         this.gameStateArray[i].push(0);
+                        this.correctAnswer[i].push(0);
                     }
                 }
             }
@@ -104,7 +107,7 @@
                 let randomNumber = 0;
                 let tempArray = [];
                 let randomOrder = [];
-                // let randomArray = [];
+                // 랜덤 숫자 생성햬서 tempArray에 담는다
                 for (let i = 0; i < this.amountCard / 2; i++) {
                     do {
                         randomNumber = Math.floor(Math.random() * findCardFriend.cardList.length);
@@ -118,13 +121,20 @@
                     randomOrder[i] = randomNumber;
                 }
                 for (let i = 0; i < this.amountCard / 2; i++) {
-                    // randomArray[randomOrder[i]] = tempArray[i].name;
-                    // randomArray[randomOrder[i + (this.remainCard / 2)]] = tempArray[i].name;
-
-                    //this.cardArrangeArray NOK, 정답지 만들기
-                    this.cardArrangeArray[randomOrder[i]] = tempArray[i].name;
-                    this.cardArrangeArray[randomOrder[i + (this.amountCard / 2)]] = tempArray[i].name;
+                    this.randomCardArrangement[randomOrder[i]] = tempArray[i].name;
+                    this.randomCardArrangement[randomOrder[i + (this.remainCard / 2)]] = tempArray[i].name;
                 }
+                for (var i = 0; i < this.randomCardArrangement.length; i++) {
+                    let rowValue = Math.floor(i / this.gameStateArray[0].length);
+                    let colValue = i % this.gameStateArray[0].length;
+
+                    if (this.gameStateArray.length <= rowValue) {
+                        this.gameStateArray.push([]);
+                    }
+                    this.correctAnswer[rowValue][colValue] = this.randomCardArrangement[i];
+                }
+                console.log("게임상태", this.gameStateArray);
+                console.log("게임정답지", this.correctAnswer);
             }
             //
             initGameStateArray();
@@ -138,9 +148,11 @@
         visualizeCardList = () => {
             const giveRandomUrl = () => {
                 const nodeListArray = document.querySelectorAll(`.cardElementCol`);
-                for (let i = 0; i < this.amountCard; i++) {
-                    if (nodeListArray[i].classList.contains("nowChoicedCard")) {
-                        nodeListArray[i].style.backgroundImage = `url('../res/cardImage/${this.cardArrangeArray[i]}.png')`;
+                for (let i = 0; i < this.gameStateArray.length; i++) {
+                    for (let j = 0; j < this.gameStateArray[0].length; j++) {
+                        if (nodeListArray[i].classList.contains("nowChoicedCard")) {
+                            nodeListArray[i].style.backgroundImage = `url('../res/cardImage/${this.cardArrangeArray[i][j]}.png')`;
+                        }
                     }
                 }
             }
@@ -149,7 +161,8 @@
                     v.addEventListener("click", e => {
                         const [rowIndex, colIndex] = e.target.id.split('_');
                         this.gameStateArray[Number(rowIndex)][Number(colIndex)] = 1;
-                        console.log(this.gameStateArray);
+                        // this.clickFlag 변경 필요
+                        this.visualizeCardList();
                     });
                 });
             }
@@ -182,8 +195,6 @@
             }
             giveRandomUrl();
             giveCardClickEvent();
-        }
-        gameControll() {
         }
     }
 
