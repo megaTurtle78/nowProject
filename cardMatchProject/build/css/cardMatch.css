@@ -222,7 +222,9 @@ body {
           border-radius: 0.3rem;
           background-size: contain;
           background-position: center;
-          background-repeat: no-repeat; }
+          background-repeat: no-repeat;
+          pointer-events: none;
+          cursor: default; }
         .gameDisplayBox .gamePlayBox .cardElementsBox .cardElementRow .foundCard {
           visibility: hidden; }
     .gameDisplayBox .gamePlayBox .showCurrentStateGameBox {
